@@ -65,6 +65,30 @@ machines_df = None
 telemetry_df = None
 
 
+def _demo_machine_metadata():
+    """Return deterministic machine metadata when the optional dataset is unavailable."""
+    machine_types = [
+        ("M001", "compressor", "P01_Z01", 150),
+        ("M002", "conveyor_motor", "P01_Z01", 90),
+        ("M003", "cooling_unit", "P01_Z02", 220),
+        ("M004", "packaging_machine", "P01_Z02", 120),
+        ("M005", "cnc_machine", "P02_Z01", 180),
+        ("M006", "compressor", "P02_Z02", 150),
+    ]
+    return pd.DataFrame(
+        [
+            {
+                "machine_id": machine_id,
+                "machine_type": machine_type,
+                "plant_id": plant_id[:3],
+                "zone_id": plant_id,
+                "rated_power_kw": rated_power_kw,
+            }
+            for machine_id, machine_type, plant_id, rated_power_kw in machine_types
+        ]
+    )
+
+
 def load_models():
     model_loader.load_all_models()
 
@@ -73,9 +97,18 @@ def load_data():
     global machines_df, telemetry_df
     try:
         machines_df = pd.read_csv(MACHINE_METADATA_PATH)
+        required_metadata = {
+            "machine_id",
+            "machine_type",
+            "plant_id",
+            "zone_id",
+            "rated_power_kw",
+        }
+        if not required_metadata.issubset(machines_df.columns):
+            raise ValueError("machine metadata is missing required columns")
     except Exception as e:
-        print(f"Error loading machine metadata: {e}")
-        machines_df = None
+        print(f"Using demo machine metadata: {e}")
+        machines_df = _demo_machine_metadata()
     try:
         telemetry_df = pd.read_csv(TELEMETRY_DATA_PATH)
         telemetry_df["timestamp"] = pd.to_datetime(telemetry_df["timestamp"])
