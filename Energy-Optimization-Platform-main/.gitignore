@@ -1,0 +1,24 @@
+
+# Model backups (keep only latest)
+models/*_202*.pkl
+models/*_backup*.pkl
+
+dump/
+nul
+__pycache__
+live_data
+
+# Local Python environment
+.venv/
+venv/
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+
+# Generated datasets, logs, reports, and trained model artifacts
+data/synthetic/
+assets/charts/
+assets/logs/
+assets/results/
+models/*.pkl

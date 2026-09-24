@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>EnergiX Demo</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 2rem; }
+      .card { border: 1px solid #ddd; padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+      .kpi { font-size: 2rem; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>EnergiX Copilot — Demo UI</h1>
+    <div id="status" class="card">Connecting...</div>
+    <div class="card">
+      <button id="refresh">Refresh Dashboard</button>
+    </div>
+
+    <div id="dashboard"></div>
+
+    <script>
+      async function check() {
+        try {
+          const res = await fetch('/api/dashboard-summary');
+          if (!res.ok) throw new Error('no');
+          const data = await res.json();
+          document.getElementById('status').textContent = 'API online — ready for demo';
+          render(data);
+        } catch (e) {
+          document.getElementById('status').textContent = 'API unreachable. Make sure backend is running.';
+          document.getElementById('dashboard').innerHTML = '';
+        }
+      }
+      function render(d) {
+        const el = document.getElementById('dashboard');
+        el.innerHTML = '';
+        const summary = document.createElement('div');
+        summary.className = 'card';
+        summary.innerHTML = `<div class="kpi">${d.total_power_kw} kW</div><div>Total machines: ${d.total_machines}</div><div>Anomalies: ${d.anomalies_detected}</div><div>Critical alerts: ${d.critical_alerts}</div>`;
+        el.appendChild(summary);
+
+        const recs = document.createElement('div');
+        recs.className = 'card';
+        recs.innerHTML = '<h3>Recommendations (sample)</h3>';
+        fetch('/api/recommendations').then(r=>r.json()).then(arr=>{
+          if(arr.length===0) recs.innerHTML += '<div>No recommendations right now</div>';
+          arr.slice(0,5).forEach(r=>{
+            const item = document.createElement('div');
+            item.textContent = `${r.title} — ${r.estimated_savings_percent}%`; 
+            recs.appendChild(item);
+          })
+        }).catch(()=>{ recs.innerHTML += '<div>Failed to load recommendations</div>'; });
+
+        el.appendChild(recs);
+      }
+
+      document.getElementById('refresh').addEventListener('click', check);
+      check();
+    </script>
+  </body>
+</html>
